@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>血壓記錄鍵盤</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: #f5f5f7; margin: 0; padding: 10px; display: flex; flex-direction: column; height: 100vh; justify-content: space-between; }
+        .display-container { background: white; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 10px; }
+        .display-title { font-size: 14px; color: #8e8e93; margin-bottom: 5px; }
+        .display-value { font-size: 36px; font-weight: bold; color: #1c1c1e; min-height: 44px; word-break: break-all; }
+        .keyboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; flex-grow: 1; margin-bottom: 10px; }
+        .btn { display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 600; background: white; color: #1c1c1e; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .btn:active { background: #e5e5ea; }
+        .btn.action { background: #e5e5ea; color: #007aff; }
+        .btn.action:active { background: #d1d1d6; }
+        .btn.send { background: #34c759; color: white; grid-column: span 3; height: 60px; font-size: 20px; box-shadow: 0 4px 6px rgba(52, 199, 89, 0.2); }
+        .btn.send:active { background: #28a745; }
+    </style>
+</head>
+<body>
+
+    <div class="display-container">
+        <div class="display-title">即將發送的血壓數據</div>
+        <div class="display-value" id="output">---</div>
+    </div>
+    
+    <div class="keyboard">
+        <div class="btn" onclick="input('1')">1</div>
+        <div class="btn" onclick="input('2')">2</div>
+        <div class="btn" onclick="input('3')">3</div>
+        <div class="btn" onclick="input('4')">4</div>
+        <div class="btn" onclick="input('5')">5</div>
+        <div class="btn" onclick="input('6')">6</div>
+        <div class="btn" onclick="input('7')">7</div>
+        <div class="btn" onclick="input('8')">8</div>
+        <div class="btn" onclick="input('9')">9</div>
+        <div class="btn action" onclick="input('/')">/</div>
+        <div class="btn" onclick="input('0')">0</div>
+        <div class="btn action" onclick="backspace()">⌫</div>
+        <div class="btn send" onclick="sendData()">確認發送</div>
+    </div>
+
+    <script>
+        let currentInput = "";
+        const outputEl = document.getElementById('output');
+        
+        // 【注意】這裡的 LIFF ID 我們在下一個步驟拿到後，再回來修改它
+        const MY_LIFF_ID = "先空著_下個步驟再填"; 
+
+        // 初始化 LINE LIFF
+        liff.init({ liffId: MY_LIFF_ID }).then(() => {
+            if (!liff.isLoggedIn()) {
+                liff.login();
+            }
+            if (!liff.permission.query("chat_message.write")) {
+                liff.requestDevicePermission("chat_message.write");
+            }
+        }).catch((err) => {
+            console.error('LIFF 初始化失敗', err);
+        });
+
+        function input(num) {
+            currentInput += num;
+            outputEl.innerText = currentInput;
+        }
+
+        function backspace() {
+            currentInput = currentInput.slice(0, -1);
+            outputEl.innerText = currentInput || "---";
+        }
+
+        function sendData() {
+            if (!currentInput) return;
+            
+            liff.sendMessages([
+                {
+                    type: 'text',
+                    text: currentInput // 發送文字到 LINE 對話框，例如 "120/80"
+                }
+            ]).then(() => {
+                liff.closeWindow(); // 發送成功後自動關閉視窗
+            }).catch((err) => {
+                alert('發送失敗，請確認是否在 LINE App 內開啟：' + err);
+            });
+        }
+    </script>
+</body>
+</html>
